@@ -3,14 +3,15 @@ service: api-comentario
 
 provider:
   name: aws
-  runtime: python3.13
+  runtime: python3.13	
   memorySize: 1024
   timeout: 20
   iam:
-    role: arn:aws:iam::364506194159:role/LabRole
+    role: arn:aws:iam::364506194159:role/LabRole	
   environment:
     TABLE_NAME: ${sls:stage}-t_comentarios
-    
+    BUCKET_NAME: ${sls:stage}-bucket-ingesta-comentarios-${aws:accountId}
+
 functions:
   crear:
     handler: comentario.lambda_handler
@@ -39,3 +40,18 @@ resources:
             KeyType: RANGE
         # Set the capacity to auto-scale
         BillingMode: PAY_PER_REQUEST
+    
+    # NUEVO RECURSO: Bucket S3 para ingesta push
+    BucketIngestaComentarios:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.BUCKET_NAME}
+        AccessControl: Private
+        # Configuración adicional para mejor organización
+        Tags:
+          - Key: Project
+            Value: api-comentario
+          - Key: Environment
+            Value: ${sls:stage}
+          - Key: CreatedBy
+            Value: serverless-framework
